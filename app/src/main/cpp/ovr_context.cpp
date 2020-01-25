@@ -188,6 +188,98 @@ void OvrContext::setControllerInfo(TrackingInfo *packet, double displayTime) {
     for (uint32_t deviceIndex = 0;
          vrapi_EnumerateInputDevices(Ovr, deviceIndex, &curCaps) >= 0; deviceIndex++) {
         LOG("Device %d: Type=%d ID=%d", deviceIndex, curCaps.Type, curCaps.DeviceID);
+        if (curCaps.Type == ovrControllerType_Hand) {  //A3
+            // Oculus Quest Hand Tracking
+            if (controller >= 2) {
+                LOG("Device %d: Ignore.", deviceIndex);
+                continue;
+            }
+
+            auto &c = packet->controller[controller];
+
+            ovrInputHandCapabilities handCapabilities;
+            ovrInputStateHand inputStateHand;
+            handCapabilities.Header = curCaps;
+
+            result = vrapi_GetInputDeviceCapabilities(Ovr, &handCapabilities.Header );
+
+            if (result != ovrSuccess) {
+                continue;
+            }
+
+            if ((handCapabilities.HandCapabilities & ovrHandCaps_LeftHand) != 0) {
+                c.flags |= TrackingInfo::Controller::FLAG_CONTROLLER_LEFTHAND;
+            }
+            inputStateHand.Header.ControllerType = handCapabilities.Header.Type;
+
+            result = vrapi_GetCurrentInputState(Ovr, handCapabilities.Header.DeviceID, &inputStateHand.Header);
+            if (result != ovrSuccess) {
+                continue;
+            }
+
+            c.flags |= TrackingInfo::Controller::FLAG_CONTROLLER_ENABLE;
+
+            c.flags |= TrackingInfo::Controller::FLAG_CONTROLLER_OCULUS_HAND;
+
+            c.inputStateStatus = inputStateHand.InputStateStatus;
+
+            //ovrTracking tracking;
+            //if (vrapi_GetInputTrackingState(Ovr, handCapabilities.Header.DeviceID, 0, &tracking) != ovrSuccess) {
+            //    LOG("vrapi_GetInputTrackingState failed. Device was disconnected?");
+            //} else {
+//
+            //    memcpy(&c.orientation,
+            //           &tracking.HeadPose.Pose.Orientation,
+            //           sizeof(tracking.HeadPose.Pose.Orientation));
+//
+            //    memcpy(&c.position,
+            //           &tracking.HeadPose.Pose.Position,
+            //           sizeof(tracking.HeadPose.Pose.Position));
+//
+            //    memcpy(&c.angularVelocity,
+            //           &tracking.HeadPose.AngularVelocity,
+            //           sizeof(tracking.HeadPose.AngularVelocity));
+//
+            //    memcpy(&c.linearVelocity,
+            //           &tracking.HeadPose.LinearVelocity,
+            //           sizeof(tracking.HeadPose.LinearVelocity));
+//
+            //    memcpy(&c.angularAcceleration,
+            //           &tracking.HeadPose.AngularAcceleration,
+            //           sizeof(tracking.HeadPose.AngularAcceleration));
+//
+            //    memcpy(&c.linearAcceleration,
+            //           &tracking.HeadPose.LinearAcceleration,
+            //           sizeof(tracking.HeadPose.LinearAcceleration));
+            //}
+
+            ovrHandedness handedness = handCapabilities.HandCapabilities & ovrHandCaps_LeftHand ? VRAPI_HAND_LEFT : VRAPI_HAND_RIGHT;
+            ovrHandSkeleton handSkeleton;
+            handSkeleton.Header.Version = ovrHandVersion_1;
+            if (vrapi_GetHandSkeleton(Ovr, handedness, &handSkeleton.Header ) != ovrSuccess) {
+                LOG("VrHands - failed to get hand skeleton");
+            } else {
+                for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
+                    memcpy(&c.bonePositionsBase[i], &handSkeleton.BonePoses[i].Position, sizeof(handSkeleton.BonePoses[i].Position));
+                }
+                for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
+                    memcpy(&c.boneRotationsBase[i], &handSkeleton.BonePoses[i].Orientation, sizeof(handSkeleton.BonePoses[i].Orientation));
+                }
+            }
+
+            ovrHandPose handPose;
+            handPose.Header.Version = ovrHandVersion_1;
+            if (vrapi_GetHandPose(Ovr, handCapabilities.Header.DeviceID, 0, &handPose.Header ) != ovrSuccess) {
+                LOG("VrHands - failed to get hand pose");
+            } else {
+                memcpy(&c.orientation, &handPose.RootPose.Orientation, sizeof(handPose.RootPose.Orientation));
+                memcpy(&c.position, &handPose.RootPose.Position, sizeof(handPose.RootPose.Position));
+                for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
+                    memcpy(&c.boneRotations[i], &handPose.BoneRotations[i], sizeof(handPose.BoneRotations[i]));
+                }
+            }
+            controller++;
+        }
         if (curCaps.Type == ovrControllerType_TrackedRemote) {
             // Gear VR / Oculus Go 3DoF Controller / Oculus Quest Touch Controller
             if (controller >= 2) {

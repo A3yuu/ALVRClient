@@ -54,6 +54,9 @@ typedef struct ovrSystemCreateInfoVulkan_
 	VkDevice			Device;
 } ovrSystemCreateInfoVulkan;
 
+OVR_VRAPI_ASSERT_TYPE_SIZE_32_BIT( ovrSystemCreateInfoVulkan, 12 );
+OVR_VRAPI_ASSERT_TYPE_SIZE_64_BIT( ovrSystemCreateInfoVulkan, 24 );
+
 /// Initializes the API for Vulkan support.
 /// This is lightweight and does not create any threads.
 /// This is called after vrapi_Initialize and before texture swapchain creation, or
