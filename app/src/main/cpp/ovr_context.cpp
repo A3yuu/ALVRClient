@@ -222,36 +222,8 @@ void OvrContext::setControllerInfo(TrackingInfo *packet, double displayTime) {
             c.flags |= TrackingInfo::Controller::FLAG_CONTROLLER_OCULUS_HAND;
 
             c.inputStateStatus = inputStateHand.InputStateStatus;
-
-            //ovrTracking tracking;
-            //if (vrapi_GetInputTrackingState(Ovr, handCapabilities.Header.DeviceID, 0, &tracking) != ovrSuccess) {
-            //    LOG("vrapi_GetInputTrackingState failed. Device was disconnected?");
-            //} else {
-//
-            //    memcpy(&c.orientation,
-            //           &tracking.HeadPose.Pose.Orientation,
-            //           sizeof(tracking.HeadPose.Pose.Orientation));
-//
-            //    memcpy(&c.position,
-            //           &tracking.HeadPose.Pose.Position,
-            //           sizeof(tracking.HeadPose.Pose.Position));
-//
-            //    memcpy(&c.angularVelocity,
-            //           &tracking.HeadPose.AngularVelocity,
-            //           sizeof(tracking.HeadPose.AngularVelocity));
-//
-            //    memcpy(&c.linearVelocity,
-            //           &tracking.HeadPose.LinearVelocity,
-            //           sizeof(tracking.HeadPose.LinearVelocity));
-//
-            //    memcpy(&c.angularAcceleration,
-            //           &tracking.HeadPose.AngularAcceleration,
-            //           sizeof(tracking.HeadPose.AngularAcceleration));
-//
-            //    memcpy(&c.linearAcceleration,
-            //           &tracking.HeadPose.LinearAcceleration,
-            //           sizeof(tracking.HeadPose.LinearAcceleration));
-            //}
+            memcpy(&c.orientation, &inputStateHand.PointerPose.Orientation, sizeof(inputStateHand.PointerPose.Orientation));
+            memcpy(&c.position, &inputStateHand.PointerPose.Position, sizeof(inputStateHand.PointerPose.Position));
 
             ovrHandedness handedness = handCapabilities.HandCapabilities & ovrHandCaps_LeftHand ? VRAPI_HAND_LEFT : VRAPI_HAND_RIGHT;
             ovrHandSkeleton handSkeleton;
@@ -262,9 +234,9 @@ void OvrContext::setControllerInfo(TrackingInfo *packet, double displayTime) {
                 for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
                     memcpy(&c.bonePositionsBase[i], &handSkeleton.BonePoses[i].Position, sizeof(handSkeleton.BonePoses[i].Position));
                 }
-                for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
-                    memcpy(&c.boneRotationsBase[i], &handSkeleton.BonePoses[i].Orientation, sizeof(handSkeleton.BonePoses[i].Orientation));
-                }
+                //for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
+                //    memcpy(&c.boneRotationsBase[i], &handSkeleton.BonePoses[i].Orientation, sizeof(handSkeleton.BonePoses[i].Orientation));
+                //}
             }
 
             ovrHandPose handPose;
@@ -272,8 +244,8 @@ void OvrContext::setControllerInfo(TrackingInfo *packet, double displayTime) {
             if (vrapi_GetHandPose(Ovr, handCapabilities.Header.DeviceID, 0, &handPose.Header ) != ovrSuccess) {
                 LOG("VrHands - failed to get hand pose");
             } else {
-                memcpy(&c.orientation, &handPose.RootPose.Orientation, sizeof(handPose.RootPose.Orientation));
-                memcpy(&c.position, &handPose.RootPose.Position, sizeof(handPose.RootPose.Position));
+                memcpy(&c.boneRootOrientation, &handPose.RootPose.Orientation, sizeof(handPose.RootPose.Orientation));
+                memcpy(&c.boneRootPosition, &handPose.RootPose.Position, sizeof(handPose.RootPose.Position));
                 for(int i=0;i<ovrHandBone_MaxSkinnable;i++) {
                     memcpy(&c.boneRotations[i], &handPose.BoneRotations[i], sizeof(handPose.BoneRotations[i]));
                 }

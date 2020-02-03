@@ -271,8 +271,10 @@ struct TrackingInfo {
 
 		// Tracking info of hand. A3
         TrackingQuat boneRotations[alvrHandBone_MaxSkinnable];
-		TrackingQuat boneRotationsBase[alvrHandBone_MaxSkinnable];
+		//TrackingQuat boneRotationsBase[alvrHandBone_MaxSkinnable];
         TrackingVector3 bonePositionsBase[alvrHandBone_MaxSkinnable];
+        TrackingQuat boneRootOrientation;
+        TrackingVector3 boneRootPosition;
         uint32_t inputStateStatus;
 	} controller[2];
 };

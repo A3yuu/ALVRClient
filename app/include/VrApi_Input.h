@@ -137,7 +137,7 @@ typedef enum ovrControllerCapabilities_
 /// Details about the Oculus Remote input device.
 typedef struct ovrInputTrackedRemoteCapabilities_
 {
-	ovrInputCapabilityHeader	Header;
+    ovrInputCapabilityHeader	Header;
 
 	/// Mask of controller capabilities described by ovrControllerCapabilities
 	uint32_t					ControllerCapabilities;
